@@ -1,0 +1,11 @@
+{
+  "name": "agora",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "ssh://git@github.com/oswystan/agora",
+  "author": "oswystan <oswystan@126.com>",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}

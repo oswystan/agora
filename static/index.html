@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>agora</title>
+    <script type="text/javascript" src="vendor/AgoraRTCSDK-2.4.1.js"></script>
+</head>
+<style type="text/css">
+    * {
+        font-family: Lato, Arial;
+        font-size: 1em;
+    }
+    input,select {
+        padding: 8px 14px;
+    }
+    button {
+        padding: 8px 14px;
+    }
+
+    #video_area {
+        border: 1px solid #ccc;
+        width: 100%;
+    }
+    #video_area>div {
+        width: 300px;
+        height: 200px;
+    }
+</style>
+<body>
+    <select id="resolution">
+        <option>120p_1</option>
+        <option>120p_3</option>
+        <option>180p_1</option>
+        <option>180p_3</option>
+        <option>180p_4</option>
+        <option>240p_1</option>
+        <option>240p_3</option>
+        <option>240p_4</option>
+        <option>360p_1</option>
+        <option>360p_3</option>
+        <option>360p_4</option>
+        <option>360p_6</option>
+        <option>360p_7</option>
+        <option>360p_8</option>
+        <option>360p_9</option>
+        <option>360p_10</option>
+        <option>360p_11</option>
+        <option selected>480p_1</option>
+        <option>480p_2</option>
+        <option>480p_3</option>
+        <option>480p_4</option>
+        <option>480p_6</option>
+        <option>480p_8</option>
+        <option>480p_9</option>
+        <option>480p_10</option>
+        <option>720p_1</option>
+        <option>720p_2</option>
+        <option>720p_3</option>
+        <option>720p_5</option>
+        <option>720p_6</option>
+        <option>1080p_1</option>
+        <option>1080p_2</option>
+        <option>1080p_3</option>
+    </select>
+    <input type="text" id="channel" placeholder="channel id" value="1000">
+    <button id="join" onclick="join()">JOIN</button>
+    <button id="publish" onclick="publish()">PUBLISH</button>
+    <button id="subscribe" onclick="subscribe()">SUBSCRIBE</button>
+    <button id="leave" onclick="leave()">LEAVE</button>
+
+    <div id="video_area"></div>
+</body>
+
+<script type="text/javascript">
+
+    const LOG_VERBOSE = 5, LOG_DEBUG = 4, LOG_INFO = 3, LOG_WARN = 2, LOG_ERROR = 1;
+    let LOG_CUR_LEVEL = LOG_VERBOSE;
+    const logv = (...args) => LOG_CUR_LEVEL >= LOG_VERBOSE && console.debug.apply(console, ["[V]" + new Date().toISOString(), ...args]);
+    const logd = (...args) => LOG_CUR_LEVEL >= LOG_DEBUG   && console.debug.apply(console, ["[D]" + new Date().toISOString(), ...args]);
+    const logi = (...args) => LOG_CUR_LEVEL >= LOG_INFO    && console.info.apply (console, ["[I]" + new Date().toISOString(), ...args]);
+    const logw = (...args) => LOG_CUR_LEVEL >= LOG_WARN    && console.warn.apply (console, ["[W]" + new Date().toISOString(), ...args]);
+    const loge = (...args) => LOG_CUR_LEVEL >= LOG_ERROR   && console.error.apply(console, ["[E]" + new Date().toISOString(), ...args]);
+
+    const ID = "d023c916c27b42e2be5e3a096bcf8440";
+    var client = null;
+    var streams = { local: [], remote: []};
+    var channel = null;
+    var UID = null;
+
+    function join() {
+        logi("do join");
+        if (client) {
+            loge("already joined");
+            return;
+        }
+        if (!check_channel()) {
+            return;
+        }
+        logd("join channel:", channel);
+
+        function do_join() {
+            function finished(uid) {
+                UID = uid;
+                logi("join succ with:", uid);
+            }
+            client.join(null, channel, null, finished);
+        }
+
+        client = AgoraRTC.createClient({mode: 'h264_interop'});
+        client.init(ID, function() {
+            logi("client initialized");
+            install_events_handler(client);
+            do_join();
+        });
+    }
+    function publish() {
+        logi("do publish");
+        let profile = document.getElementById("resolution").value;
+        let stream = AgoraRTC.createStream({streamID: UID, audio: true, video: true});
+        if (!stream) {
+            loge("fail to create stream");
+            return;
+        }
+        stream.setVideoProfile(profile);
+
+        function stream_succ() {
+            logi("stream init success");
+            let sec = create_video_div(UID);
+            stream.play(sec);
+            publish_stream();
+        }
+        function stream_fail() {
+            loge("stream init failed");
+        }
+        function publish_fail(e) {
+            loge("publish stream fail:", e);
+        }
+        function publish_stream() {
+            client.publish(stream, publish_fail);
+        }
+        stream.init(stream_succ, stream_fail);
+    }
+    function subscribe() {
+        logi("do subscribe");
+    }
+    function leave() {
+        logi("do leave");
+        if (!client) {
+            loge("join first");
+            return;
+        }
+
+        function succ() {
+            logi("leave succ");
+            client = null;
+        }
+        function fail() {
+            loge("leave fail");
+            client = null;
+        }
+        client.leave(succ, fail);
+    }
+
+    function install_events_handler(cli) {
+        cli.on("stream-published", function(e) {
+            logi("stream published:", e);
+            streams.local.push(e.stream);
+        });
+        cli.on("stream-subscribed", function(e) {
+            logi("stream subscribed:", e);
+            streams.remote.push(e.stream);
+            let domID = create_video_div(e.stream.getId());
+            e.stream.play(domID);
+        });
+
+        cli.on("stream-added", function(e) {
+            logi("new stream: ", e);
+            function subscribe_fail(e) {
+                loge("fail to subscribe:", e);
+            }
+            client.subscribe(e.stream, subscribe_fail);
+        });
+        cli.on("stream-removed", function(e) {
+            logi("del stream:", e);
+            function unsubscribe_fail(e) {
+                loge("fail to subscribe:", e);
+            }
+            e.stream.stop();
+        })
+        cli.on("peer-leave", function(e) {
+            logi(e, "leave");
+        });
+    }
+
+    function check_channel() {
+        var ch = document.getElementById("channel");
+        if (ch && ch.value != "") {
+            channel = ch.value;
+            return true;
+        }
+        loge("invalid channel id");
+        return false;
+    }
+
+    function create_video_div(uid) {
+        var parent = document.getElementById("video_area");
+        var div = document.createElement("div");
+        div.id = "sec" + uid;
+        parent.appendChild(div);
+        return div.id;
+    }
+
+</script>
+</html>
