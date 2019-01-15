@@ -65,6 +65,10 @@
     <button id="join" onclick="join()">JOIN</button>
     <button id="publish" onclick="publish()">PUBLISH</button>
     <button id="subscribe" onclick="subscribe()">SUBSCRIBE</button>
+    <button id="disable-audio" onclick="disable_audio()">DISABLE-AUDIO</button>
+    <button id="disable-video" onclick="disable_video()">DISABLE-VIDEO</button>
+    <button id="enable-audio" onclick="enable_audio()">ENABLE-AUDIO</button>
+    <button id="enable-video" onclick="enable_video()">ENABLE-VIDEO</button>
     <button id="leave" onclick="leave()">LEAVE</button>
 
     <div id="video_area"></div>
@@ -189,6 +193,21 @@
         cli.on("peer-leave", function(e) {
             logi(e, "leave");
         });
+        cli.on("client-banned", function(e) {
+            logi("client-banned:", e);
+        });
+        cli.on("mute-audio", function(e) {
+            logi("mute-audio:", e);
+        });
+        cli.on("unmute-audio", function(e) {
+            logi("unmute-audio:", e);
+        });
+        cli.on("mute-video", function(e) {
+            logi("mute-video:", e);
+        });
+        cli.on("unmute-video", function(e) {
+            logi("unmute-video:", e);
+        });
     }
 
     function check_channel() {
@@ -209,5 +228,30 @@
         return div.id;
     }
 
+    function disable_audio() {
+        logi("disable audio");
+        if (streams.local.length > 0) {
+            streams.local[0].disableAudio();
+        }
+    }
+    function disable_video() {
+        logi("disable video");
+        if (streams.local.length > 0) {
+            streams.local[0].disableVideo();
+        }
+    }
+
+    function enable_audio() {
+        logi("enable audio");
+        if (streams.local.length > 0) {
+            streams.local[0].enableAudio();
+        }
+    }
+    function enable_video() {
+        logi("enable video");
+        if (streams.local.length > 0) {
+            streams.local[0].enableVideo();
+        }
+    }
 </script>
 </html>
