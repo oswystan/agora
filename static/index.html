@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>agora</title>
-    <script type="text/javascript" src="vendor/AgoraRTCSDK-2.4.1.js"></script>
+    <script type="text/javascript" src="vendor/AgoraRTCSDK-2.6.1.js"></script>
 </head>
 <style type="text/css">
     * {
@@ -189,24 +189,36 @@
                 loge("fail to subscribe:", e);
             }
             e.stream.stop();
-        })
-        cli.on("peer-leave", function(e) {
-            logi(e, "leave");
-        });
-        cli.on("client-banned", function(e) {
-            logi("client-banned:", e);
         });
         cli.on("mute-audio", function(e) {
-            logi("mute-audio:", e);
+            logi("mute-audio", e);
         });
         cli.on("unmute-audio", function(e) {
-            logi("unmute-audio:", e);
+            logi("unmute-audio", e);
         });
         cli.on("mute-video", function(e) {
-            logi("mute-video:", e);
+            logi("mute-video", e);
         });
         cli.on("unmute-video", function(e) {
-            logi("unmute-video:", e);
+            logi("unmute-video", e);
+        });
+        cli.on("client-banned", function(e) {
+            logi("client-banned", e);
+        });
+        cli.on("active-speaker", function(e) {
+            logi("active-speaker", e);
+        });
+        cli.on("volume-indicator", function(e) {
+            logi("volume-indicator", e);
+        });
+        cli.on("network-type-changed", function(e) {
+            logi("network-type-changed", e);
+        });
+        cli.on("recording-device-changed", function(e) {
+            logi("recording-device-changed", e);
+        });
+        cli.on("playout-device-changed", function(e) {
+            logi("playout-device-changed", e);
         });
     }
 
