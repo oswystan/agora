@@ -7,7 +7,7 @@
 <style type="text/css">
     * {
         font-family: Lato, Arial;
-        font-size: 1em;
+        font-size: 0.8em;
     }
     input,select {
         padding: 8px 14px;
@@ -65,6 +65,8 @@
     <button id="join" onclick="join()">JOIN</button>
     <button id="publish" onclick="publish()">PUBLISH</button>
     <button id="subscribe" onclick="subscribe()">SUBSCRIBE</button>
+    <button id="unsubscribe" onclick="unsubscribe()">UNSUBSCRIBE</button>
+    <button id="unpublish" onclick="unpublish()">UNPUBLISH</button>
     <button id="disable-audio" onclick="disable_audio()">DISABLE-AUDIO</button>
     <button id="disable-video" onclick="disable_video()">DISABLE-VIDEO</button>
     <button id="enable-audio" onclick="enable_audio()">ENABLE-AUDIO</button>
@@ -78,11 +80,11 @@
 
     const LOG_VERBOSE = 5, LOG_DEBUG = 4, LOG_INFO = 3, LOG_WARN = 2, LOG_ERROR = 1;
     let LOG_CUR_LEVEL = LOG_VERBOSE;
-    const logv = (...args) => LOG_CUR_LEVEL >= LOG_VERBOSE && console.debug.apply(console, ["[V]" + new Date().toISOString(), ...args]);
-    const logd = (...args) => LOG_CUR_LEVEL >= LOG_DEBUG   && console.debug.apply(console, ["[D]" + new Date().toISOString(), ...args]);
-    const logi = (...args) => LOG_CUR_LEVEL >= LOG_INFO    && console.info.apply (console, ["[I]" + new Date().toISOString(), ...args]);
-    const logw = (...args) => LOG_CUR_LEVEL >= LOG_WARN    && console.warn.apply (console, ["[W]" + new Date().toISOString(), ...args]);
-    const loge = (...args) => LOG_CUR_LEVEL >= LOG_ERROR   && console.error.apply(console, ["[E]" + new Date().toISOString(), ...args]);
+    const logv = (...args) => LOG_CUR_LEVEL >= LOG_VERBOSE && console.debug.apply(console, ["mine[V]" + new Date().toISOString(), ...args]);
+    const logd = (...args) => LOG_CUR_LEVEL >= LOG_DEBUG   && console.debug.apply(console, ["mine[D]" + new Date().toISOString(), ...args]);
+    const logi = (...args) => LOG_CUR_LEVEL >= LOG_INFO    && console.info.apply (console, ["mine[I]" + new Date().toISOString(), ...args]);
+    const logw = (...args) => LOG_CUR_LEVEL >= LOG_WARN    && console.warn.apply (console, ["mine[W]" + new Date().toISOString(), ...args]);
+    const loge = (...args) => LOG_CUR_LEVEL >= LOG_ERROR   && console.error.apply(console, ["mine[E]" + new Date().toISOString(), ...args]);
 
     const ID = "d023c916c27b42e2be5e3a096bcf8440";
     var client = null;
@@ -145,6 +147,20 @@
     }
     function subscribe() {
         logi("do subscribe");
+    }
+    function unpublish() {
+        logi("do unpublish");
+        if (streams.local.length == 0) {
+            return;
+        }
+        let stream = streams.local[0];
+        streams.local.splice(0, 1);
+        stream.stop();
+        stream.close();
+        client.unpublish(stream);
+    }
+    function unsubscribe() {
+        logi("do unsubscribe");
     }
     function leave() {
         logi("do leave");
@@ -220,6 +236,27 @@
         cli.on("playout-device-changed", function(e) {
             logi("playout-device-changed", e);
         });
+        cli.on("camera-changed", function(e) {
+            logi("camera-changed", e);
+        });
+        cli.on("connection-state-change", function(e) {
+            logi("connection-state-change", e);
+        });
+        cli.on("stream-reconnect-start", function(e) {
+            logi("stream-reconnect-start", e);
+        });
+        cli.on("stream-reconnect-end", function(e) {
+            logi("stream-reconnect-end", e);
+        });
+        cli.on("peer-online", function(e) {
+            logi("peer-online", e);
+        });
+        cli.on("connected", function(e) {
+            logi("connected", e);
+        });
+        // cli.on("network-quality", function(e) {
+        //     logi("network-quality", e);
+        // });
     }
 
     function check_channel() {
